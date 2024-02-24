@@ -1,8 +1,7 @@
 using System;
-using System.Collections;
-using System.Collections.Generic;
+using MystroBot;
+using Unity.Collections;
 using Unity.Netcode;
-using Unity.VisualScripting;
 using UnityEngine;
 
 public class ServerProjectileBheaviour : NetworkBehaviour
@@ -15,13 +14,25 @@ public class ServerProjectileBheaviour : NetworkBehaviour
     [SerializeField]
     float explosionLifeTime = 2f;
 
+    private NetworkVariable<FixedString128Bytes> projectileIdentifier = new();
+
     [SerializeField] private GameObject explosion;
 
     public float damage = 20f;
 
-    public void Setup(Vector3 shootDirection, GameObject ownerPrefab)
+    public static Action<string> OnServerProjectileDestroyed;
+
+    public override void OnNetworkSpawn()
     {
-        Physics.IgnoreCollision(gameObject.GetComponentInChildren<Collider>(), ownerPrefab.GetComponent<Collider>());
+        if (!IsHost && NetworkManager.Singleton.LocalClient.ClientId == OwnerClientId)
+        {
+            gameObject.SetActive(false);
+        }
+    }
+
+    public void Setup(Vector3 shootDirection, GameObject ownerPrefab, string projectileIdentifier)
+    {
+        this.projectileIdentifier.Value = projectileIdentifier;
         shootDir = shootDirection;
         Destroy(gameObject, lifeTime);
     }
@@ -32,6 +43,7 @@ public class ServerProjectileBheaviour : NetworkBehaviour
 
     private void OnDestroy()
     {
+        OnServerProjectileDestroyed?.Invoke(projectileIdentifier.Value.ToString());
         if (IsServer)
         {
             GameObject _explosion = Instantiate(explosion, transform.position, transform.rotation);
@@ -40,5 +52,23 @@ public class ServerProjectileBheaviour : NetworkBehaviour
         }
     }
 
+    void ApplyEffects(IsDamageable target)
+    {
+        Debug.Log("Apply effect Server only");
+        target.dealDamage(damage);
+    }
 
+    private void OnTriggerEnter(Collider other)
+    {
+        if (IsServer)
+        {
+            IsDamageable robot = other.gameObject.GetComponent<IsDamageable>();
+            if (robot != null && OwnerClientId != robot.getOwnerIdIfOwned())
+            {
+                ApplyEffects(robot);
+                Destroy(gameObject);
+            }
+        }
+    }
+    
 }

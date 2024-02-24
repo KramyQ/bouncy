@@ -1,5 +1,6 @@
 using Unity.Netcode;
 using UnityEngine;
+using UnityEngine.InputSystem;
 
 namespace MystroBot
 {
@@ -10,66 +11,82 @@ namespace MystroBot
         [SerializeField] InputReader playerInput;
         [SerializeField] GameObject FireRightClient;
         [SerializeField] GameObject FireRightServer;
+        [SerializeField] private GameObject robotUI;
+        [SerializeField] private RobotState robotState;
 
-        // Start is called before the first frame update
-        void Start()
+        public override void OnNetworkSpawn()
         {
-            if (IsLocalPlayer)
+            if (IsLocalPlayer && IsOwner)
             {
-                playerInput.inputActions.Player.FireLeft.performed += _ => FireLeft();
-                playerInput.inputActions.Player.FireRight.performed += _ => FireRight();
-                playerInput.inputActions.Player.Defense.performed += _ => UseDefense();
-                playerInput.inputActions.Player.Utility.performed += _ => UseUtility();
-                playerInput.inputActions.Player.Dodge.performed += _ => UseDodge();
+                playerInput.inputActions.Player.FireLeft.performed += FireLeft;
+                playerInput.inputActions.Player.FireRight.performed += FireRight;
+                playerInput.inputActions.Player.Defense.performed += UseDefense;
+                playerInput.inputActions.Player.Utility.performed += UseUtility;
+                playerInput.inputActions.Player.Dodge.performed += UseDodge;
+                robotUI.SetActive(true);
             }
         }
 
-        private void UseDodge()
+        public override void OnNetworkDespawn()
         {
-            //noop
+            if (IsLocalPlayer && IsOwner)
+            {
+                playerInput.inputActions.Player.FireLeft.performed -= FireLeft;
+                playerInput.inputActions.Player.FireRight.performed -= FireRight;
+                playerInput.inputActions.Player.Defense.performed -= UseDefense;
+                playerInput.inputActions.Player.Utility.performed -= UseUtility;
+                playerInput.inputActions.Player.Dodge.performed -= UseDodge;
+            }
         }
 
-        private void UseUtility()
+        private void UseDodge(InputAction.CallbackContext callbackContext)
+        {
+            IncreaseHealthserverRpc();
+        }
+
+        private void UseUtility(InputAction.CallbackContext callbackContext)
         {
             
             //noop
         }
 
-        private void UseDefense()
+        private void UseDefense(InputAction.CallbackContext callbackContext)
         {
             //noop
         }
 
-        private void FireRight()
+        private void FireRight(InputAction.CallbackContext callbackContext)
         {
-            if(!IsHost) FireRightDudeOnClient();
-            if(IsOwner) FireRightserverRpc();
+            string projectileIdentifier = System.Guid.NewGuid().ToString();
+            if(!IsHost){ FireRightDudeOnClient(projectileIdentifier);}
+            if(IsOwner){ FireRightserverRpc(projectileIdentifier, _controller.mouseHitPosition);}
         }
-        [ServerRpc]
-        private void FireRightserverRpc(ServerRpcParams serverRpcParams = default)
+        [ServerRpc] private void FireRightserverRpc(string projectileIdentifier, Vector3 mousePosition, ServerRpcParams serverRpcParams = default)
         {
             var ownerClientId = serverRpcParams.Receive.SenderClientId;
             GameObject projectilePrefab = getFireRightPrefab(false);
-            NetworkObject projectileNetObject = projectilePrefab.GetComponent<NetworkObject>();
-            projectileNetObject.CheckObjectVisibility = (clientId) => {
-                if (ownerClientId == clientId) return false;
-                return true;
-            };
-            Vector3 projectileDirection = (_controller.mouseHitPosition-transform.position).normalized;
-            GameObject instantiatedProjectile = Instantiate(projectilePrefab, transform.position+projectileDirection*0.2f, transform.rotation);
-            instantiatedProjectile.GetComponent<NetworkObject>().Spawn(true);
-            instantiatedProjectile.GetComponent<ServerProjectileBheaviour>().Setup(transform.forward, NetworkManager.Singleton.ConnectedClients[OwnerClientId].PlayerObject.gameObject);
-        }
+            Vector3 projectileDirection = (mousePosition-transform.position).normalized;
 
-        private void FireRightDudeOnClient()
+            GameObject instantiatedProjectile = Instantiate(projectilePrefab, transform.position+projectileDirection*0.2f, transform.rotation);
+            instantiatedProjectile.GetComponent<ServerProjectileBheaviour>().Setup(projectileDirection, NetworkManager.Singleton.ConnectedClients[OwnerClientId].PlayerObject.gameObject, projectileIdentifier);
+            instantiatedProjectile.GetComponent<NetworkObject>().SpawnWithOwnership(ownerClientId);
+        }
+        
+    [ServerRpc]  private void IncreaseHealthserverRpc(ServerRpcParams serverRpcParams = default)
+    {
+        robotState.currentHealth.Value += 10;
+    }
+
+
+        private void FireRightDudeOnClient(string projectileIdentifier)
         {
             GameObject projectilePrefab = getFireRightPrefab(true);
             Vector3 projectileDirection = (_controller.mouseHitPosition-transform.position).normalized;
             GameObject instantiatedProjectile = Instantiate(projectilePrefab, transform.position+projectileDirection*0.2f, transform.rotation);
-            instantiatedProjectile.GetComponent<ClientProjectileBheaviour>().Setup(transform.forward);
+            instantiatedProjectile.GetComponent<ClientProjectileBehaviour>().Setup(projectileDirection, projectileIdentifier);
         }
 
-        private void FireLeft()
+        private void FireLeft(InputAction.CallbackContext callbackContext)
         {
             //noop
         }

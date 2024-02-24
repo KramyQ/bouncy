@@ -101,7 +101,7 @@ SphereCollider:
     serializedVersion: 2
     m_Bits: 0
   m_LayerOverridePriority: 0
-  m_IsTrigger: 0
+  m_IsTrigger: 1
   m_ProvidesContacts: 0
   m_Enabled: 1
   serializedVersion: 3
@@ -259,6 +259,10 @@ PrefabInstance:
         type: 3}
       insertIndex: -1
       addedObject: {fileID: -1429027189415424333}
+    - targetCorrespondingSourceObject: {fileID: 176456, guid: 21c7e6a26feeb564fb859ba8c5cae356,
+        type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 8119112342850112953}
   m_SourcePrefab: {fileID: 100100000, guid: 21c7e6a26feeb564fb859ba8c5cae356, type: 3}
 --- !u!1 &1166513865475464467 stripped
 GameObject:
@@ -278,7 +282,7 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d5a57f767e5e46a458fc5d3c628d0cbb, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  GlobalObjectIdHash: 1043152797
+  GlobalObjectIdHash: 1893679113
   InScenePlacedSourceGlobalObjectIdHash: 0
   AlwaysReplicateAsRoot: 0
   SynchronizeTransform: 1
@@ -330,11 +334,38 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 1fa25f6f4ec25b14d92a6ef36d5ff9d7, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  projectileSpeed: 500
+  projectileSpeed: 400
   lifeTime: 2
   explosionLifeTime: 2
   explosion: {fileID: 193442, guid: 152129d7bee0a5a419e6bb25ea19a78a, type: 3}
   damage: 20
+--- !u!54 &8119112342850112953
+Rigidbody:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 1166513865475464467}
+  serializedVersion: 4
+  m_Mass: 1
+  m_Drag: 0
+  m_AngularDrag: 0.05
+  m_CenterOfMass: {x: 0, y: 0, z: 0}
+  m_InertiaTensor: {x: 1, y: 1, z: 1}
+  m_InertiaRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_IncludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ExcludeLayers:
+    serializedVersion: 2
+    m_Bits: 0
+  m_ImplicitCom: 1
+  m_ImplicitTensor: 1
+  m_UseGravity: 0
+  m_IsKinematic: 0
+  m_Interpolate: 0
+  m_Constraints: 0
+  m_CollisionDetection: 0
 --- !u!4 &1166513865475708541 stripped
 Transform:
   m_CorrespondingSourceObject: {fileID: 424486, guid: 21c7e6a26feeb564fb859ba8c5cae356,

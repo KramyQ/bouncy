@@ -246,7 +246,6 @@ namespace MystroBot
         void HandleServerReconciliation()
         {
             if (!ShouldReconcile()) return;
-            if (!ShouldReconcile()) return;
 
             float positionError;
             int bufferIndex;
@@ -407,7 +406,7 @@ namespace MystroBot
             float horizontalTargetSpeed = horizontalInput * maxSpeed;
 
             Vector3 newVelocity = new Vector3(horizontalTargetSpeed, 0, verticalTargetSpeed);
-            rb.MovePosition(rb.position + newVelocity * Time.deltaTime);
+            rb.velocity = newVelocity;
         }
 
         float AdjustInput(float input)
